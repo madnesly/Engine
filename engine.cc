@@ -1,75 +1,110 @@
-#define SDL_MAIN_HANDLED
 #include "engine.h"
 
-using namespace strawx;
+#define SDL_MAIN_HANDLED
+#include "SDL2/SDL.h"
 
-namespace { SDL_Event engine_event { }; }
+namespace {
 
-int main() {
+	using namespace strawx;
 
-	Engine::GetInstance()->Start();
+	struct Engine {
+		Engine(const int width, const int height);
+		~Engine();
 
-	STX_LOG("Refresh Rate: %d", Engine::GetInstance()->GetRefreshRate());
+		SDL_Window* window;
+		SDL_Renderer* renderer;
+		SDL_Event event;
 
-	while (Engine::GetInstance()->IsRunning()) {
+		uint8_t engine_state;
+		uint16_t refresh_rate;
+	};
 
-		while (SDL_PollEvent(&engine_event))
+}
+
+static KeyboardStates* strawx::get_kstate(Input* inst)
+{
+	return &inst->kstate;
+}
+
+int main(int argc, char** argv)
+{
+	
+	Engine strawx{ 1280, 720 };
+
+	Game::GetInstance()->Start();
+
+	while (strawx.engine_state) {
+		for (int i = 0; i < SDL_NUM_SCANCODES; ++i) {
+			get_kstate(Input::GetInstance())->down[i] = 0;
+			get_kstate(Input::GetInstance())->up[i] = 0;
+		}
+		while (SDL_PollEvent(&strawx.event))
 		{
-			switch (engine_event.type)
+			switch (strawx.event.type)
 			{
 			case SDL_QUIT:
-				Engine::GetInstance()->Exit(false);
+				strawx.engine_state = false;
 				break;
 			
 			case SDL_KEYDOWN:
-				
+				get_kstate(Input::GetInstance())->state[strawx.event.key.keysym.scancode] = 1;
+				get_kstate(Input::GetInstance())->down[strawx.event.key.keysym.scancode] = 1;
+				break;
+
+			case SDL_KEYUP:
+				get_kstate(Input::GetInstance())->state[strawx.event.key.keysym.scancode] = 0;
+
+				get_kstate(Input::GetInstance())->repeat[strawx.event.key.keysym.scancode] = 0;
+				get_kstate(Input::GetInstance())->up[strawx.event.key.keysym.scancode] = 1;
 				break;
 			}
 		}
+
+		if (Input::GetInstance()->IsKeyPressed(SDL_SCANCODE_ESCAPE))
+			strawx.engine_state = false;
 		
-		Engine::GetInstance()->Update(60.0f);
+		Game::GetInstance()->Update(strawx.refresh_rate);
 
-		SDL_SetRenderDrawColor(Engine::GetInstance()->GetRenderer(), 0, 0, 0, 255);
-		SDL_RenderClear(Engine::GetInstance()->GetRenderer());
 
-		Engine::GetInstance()->Render();
+		SDL_SetRenderDrawColor(strawx.renderer, 0, 0, 0, 255);
+		SDL_RenderClear(strawx.renderer);
 
-		SDL_RenderPresent(Engine::GetInstance()->GetRenderer());
+		Game::GetInstance()->Render();
+		
+		SDL_RenderPresent(strawx.renderer);
 	}
 
 	return EXIT_SUCCESS;
 }
 
-Engine::Engine()
+Engine::Engine(const int width, const int height) :
+	window{ nullptr }, renderer{ nullptr }, event{ },
+	engine_state{ false }, refresh_rate{ 0 }
 {
-	engine_state = false;
-	window_size[0] = 720;
-	window_size[1] = 430;
+	SDL_Log("Constructing Engine");
 
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
 	{
-		STX_LOG("Init Error: %s", SDL_GetError());
+		SDL_Log("Init Error: %s", SDL_GetError());
 	}
 
 	window = SDL_CreateWindow("Strawx Engine", SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED, window_size[0], window_size[1], 0);
+		SDL_WINDOWPOS_CENTERED, width, height, 0);
 
 	if (!window) {
-		STX_LOG("Init Error: %s", SDL_GetError());
+		SDL_Log("Init Error: %s", SDL_GetError());
 	}
 
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
 
 	if (!renderer) {
-		STX_LOG("Init Error %s", SDL_GetError());
+		SDL_Log("Init Error %s", SDL_GetError());
 	}
 
 	SDL_DisplayMode mode;
 	SDL_GetDisplayMode(SDL_GetWindowDisplayIndex(window), 0, &mode);
 
 	refresh_rate = mode.refresh_rate;
-
-	STX_LOG("Constructing Engine");
 
 	// if everything went OK
 	engine_state = true;
@@ -78,15 +113,14 @@ Engine::Engine()
 
 Engine::~Engine()
 {
-	if (window) {
-		SDL_DestroyWindow(window);
-		window = nullptr;
-	}
+	if (window) SDL_DestroyWindow(window);
+	
+	if (renderer) SDL_DestroyRenderer(renderer);
+	
+	window = nullptr;
+	renderer = nullptr;
 
-	if (renderer) {
-		SDL_DestroyRenderer(renderer);
-		renderer = nullptr;
-	}
+	SDL_Quit();
 
-	STX_LOG("Destructing Engine");
+	SDL_Log("Destructing Engine");
 }
