@@ -21,7 +21,7 @@ namespace {
 
 }
 
-static KeyboardStates* strawx::get_kstate(Input* inst)
+KeyboardStates* strawx::get_kstate(Input* inst)
 {
 	return &inst->kstate;
 }
@@ -33,10 +33,11 @@ int main(int argc, char** argv)
 
 	Game::GetInstance()->Start();
 
+	auto& [repeat, state, down, up] = *get_kstate(Input::GetInstance());
+
 	while (strawx.engine_state) {
 		for (int i = 0; i < SDL_NUM_SCANCODES; ++i) {
-			get_kstate(Input::GetInstance())->down[i] = 0;
-			get_kstate(Input::GetInstance())->up[i] = 0;
+			down[i] = up[i] = 0;
 		}
 		while (SDL_PollEvent(&strawx.event))
 		{
@@ -47,15 +48,15 @@ int main(int argc, char** argv)
 				break;
 			
 			case SDL_KEYDOWN:
-				get_kstate(Input::GetInstance())->state[strawx.event.key.keysym.scancode] = 1;
-				get_kstate(Input::GetInstance())->down[strawx.event.key.keysym.scancode] = 1;
+				state[strawx.event.key.keysym.scancode] = 1;
+				down[strawx.event.key.keysym.scancode] = 1;
 				break;
 
 			case SDL_KEYUP:
-				get_kstate(Input::GetInstance())->state[strawx.event.key.keysym.scancode] = 0;
+				state[strawx.event.key.keysym.scancode] = 0;
 
-				get_kstate(Input::GetInstance())->repeat[strawx.event.key.keysym.scancode] = 0;
-				get_kstate(Input::GetInstance())->up[strawx.event.key.keysym.scancode] = 1;
+				repeat[strawx.event.key.keysym.scancode] = 0;
+				up[strawx.event.key.keysym.scancode] = 1;
 				break;
 			}
 		}
@@ -88,8 +89,14 @@ Engine::Engine(const int width, const int height) :
 		SDL_Log("Init Error: %s", SDL_GetError());
 	}
 
-	window = SDL_CreateWindow("Strawx Engine", SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED, width, height, 0);
+	window = SDL_CreateWindow (
+		"Strawx Engine",
+		SDL_WINDOWPOS_CENTERED,
+		SDL_WINDOWPOS_CENTERED,
+		width,
+		height,
+		0
+	);
 
 	if (!window) {
 		SDL_Log("Init Error: %s", SDL_GetError());
