@@ -5,8 +5,6 @@
 
 namespace {
 
-	using namespace strawx;
-
 	struct Engine {
 		Engine(const int width, const int height);
 		~Engine();
@@ -21,58 +19,62 @@ namespace {
 
 }
 
-KeyboardStates* strawx::get_kstate(Input* inst)
+namespace strawx 
 {
-	return &inst->kstate;
+	KeyboardStates& get_kstate(Input& inst)	
+	{ 
+		return inst.kstate; 
+	}
 }
 
 int main(int argc, char** argv)
 {
+	using namespace strawx;
 	
-	Engine strawx{ 1280, 720 };
+	Engine core{ 1280, 720 };
 
-	Game::GetInstance()->Start();
+	Game::Start();
 
-	auto& [repeat, state, down, up] = *get_kstate(Input::GetInstance());
+	auto& [repeat, state, down, up] = get_kstate(Input::GetInstance());
 
-	while (strawx.engine_state) {
-		for (int i = 0; i < SDL_NUM_SCANCODES; ++i) {
-			down[i] = up[i] = 0;
-		}
-		while (SDL_PollEvent(&strawx.event))
+	while (core.engine_state) {
+		
+		down.fill(0); up.fill(0);
+		
+		while (SDL_PollEvent(&core.event))
 		{
-			switch (strawx.event.type)
+			switch (core.event.type)
 			{
 			case SDL_QUIT:
-				strawx.engine_state = false;
+				core.engine_state = false;
 				break;
 			
 			case SDL_KEYDOWN:
-				state[strawx.event.key.keysym.scancode] = 1;
-				down[strawx.event.key.keysym.scancode] = 1;
+				state[core.event.key.keysym.scancode] = 1;
+				down[core.event.key.keysym.scancode] = 1;
 				break;
 
 			case SDL_KEYUP:
-				state[strawx.event.key.keysym.scancode] = 0;
+				state[core.event.key.keysym.scancode] = 0;
 
-				repeat[strawx.event.key.keysym.scancode] = 0;
-				up[strawx.event.key.keysym.scancode] = 1;
+				repeat[core.event.key.keysym.scancode] = 0;
+				up[core.event.key.keysym.scancode] = 1;
 				break;
 			}
 		}
 
-		if (Input::GetInstance()->IsKeyPressed(SDL_SCANCODE_ESCAPE))
-			strawx.engine_state = false;
+		if (Input::GetInstance().IsKeyPressed(SDL_SCANCODE_ESCAPE))
+			core.engine_state = false;
 		
-		Game::GetInstance()->Update(strawx.refresh_rate);
+		Game::Update(core.refresh_rate);
 
 
-		SDL_SetRenderDrawColor(strawx.renderer, 0, 0, 0, 255);
-		SDL_RenderClear(strawx.renderer);
+		SDL_SetRenderDrawColor(core.renderer, 0, 0, 0, 255);
+		SDL_RenderClear(core.renderer);
 
-		Game::GetInstance()->Render();
+		Game::Render();
 		
-		SDL_RenderPresent(strawx.renderer);
+		SDL_RenderPresent(core.renderer);
 	}
 
 	return EXIT_SUCCESS;

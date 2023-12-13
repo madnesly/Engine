@@ -2,24 +2,25 @@
 #define STRAWX_ENGINE_INPUT_H
 
 #include "SDL2/SDL_scancode.h"
+#include <array>
 
 namespace strawx {
 	
 	struct KeyboardStates 
 	{
-		Uint8 repeat[SDL_NUM_SCANCODES];
-		Uint8 state[SDL_NUM_SCANCODES];
-		Uint8 down[SDL_NUM_SCANCODES];
-		Uint8 up[SDL_NUM_SCANCODES];
+		std::array<Uint8, SDL_NUM_SCANCODES> repeat;
+		std::array<Uint8, SDL_NUM_SCANCODES> state;
+		std::array<Uint8, SDL_NUM_SCANCODES> down;
+		std::array<Uint8, SDL_NUM_SCANCODES> up;
 	};
 
 	class Input final
 	{
 	public:
-		[[nodiscard]] inline static Input* GetInstance()
+		[[nodiscard]] inline static Input& GetInstance()
 		{
 			static Input instance;
-			return &instance;
+			return instance;
 		}
 
 		[[nodiscard]] inline bool IsKeyDown(SDL_Scancode scancode)
@@ -43,7 +44,7 @@ namespace strawx {
 
 	private:
 		KeyboardStates kstate;
-		friend KeyboardStates* get_kstate(Input* inst);
+		friend KeyboardStates& get_kstate(Input& inst);
 
 	private:
 		Input();
@@ -51,4 +52,4 @@ namespace strawx {
 	};
 }
 
-#endif // STRAWX_ENGINE_INPUT_H
+#endif

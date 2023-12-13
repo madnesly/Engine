@@ -5,25 +5,14 @@
 
 namespace strawx
 {
-	struct Game {
-		[[nodiscard]] 
-		static inline Game* GetInstance()
-		{
-			static Game inst;
-			return &inst;
-		}
-
+	namespace Game 
+	{
 		void Start();
 
 		void Update(float dt);
 
 		void Render();
-
-	private:
-		Game() = default;
-		~Game() = default;
-	};
-
+	}
 }
 
-#endif // STRAWX_ENGINE_GAME_H
+#endif
