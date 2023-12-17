@@ -14,6 +14,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR "Darwin")
     target_compile_options(strawx PUBLIC -Wall)
 else()
     target_compile_options(strawx PUBLIC /W4)
+    set_target_properties(strawx PROPERTIES ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}")
 endif()
 
 target_link_libraries(strawx ${SDL2_LIBRARIES})
