@@ -1,0 +1,13 @@
+
+# build directory
+build
+
+# output directory
+Debug
+Release
+
+# scripts and images
+*.png
+*.bat
+*.sh
+*.bash
