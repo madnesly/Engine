@@ -30,8 +30,10 @@ namespace strawx
 int main(int argc, char** argv)
 {
 	using namespace strawx;
-	
+ 
 	Engine core{ 1280, 720 };
+
+	TextureHandlers::Init(core.renderer);
 
 	Game::Start();
 
@@ -122,12 +124,16 @@ Engine::Engine(const int width, const int height) :
 
 Engine::~Engine()
 {
-	if (window) SDL_DestroyWindow(window);
-	
+	strawx::TextureHandlers::Clear();
+
 	if (renderer) SDL_DestroyRenderer(renderer);
+	SDL_Log("destroying renderer [%s]", SDL_GetError());
 	
-	window = nullptr;
+	if (window) SDL_DestroyWindow(window);
+	SDL_Log("destroying window [%s]", SDL_GetError());
+
 	renderer = nullptr;
+	window = nullptr;
 
 	SDL_Quit();
 
