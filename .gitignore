@@ -1,6 +1,7 @@
 
 # build directory
 build
+out
 
 # output directory
 Debug
@@ -8,6 +9,7 @@ Release
 
 # scripts and images
 *.png
+*.json
 *.bat
 *.sh
 *.bash
