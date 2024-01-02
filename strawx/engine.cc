@@ -1,4 +1,5 @@
 #include "engine.h"
+#include "core/common.hh"
 
 #define SDL_MAIN_HANDLED
 #include "SDL2/SDL.h"
@@ -33,16 +34,37 @@ int main(int argc, char** argv)
  
 	Engine core{ 1280, 720 };
 
-	TextureHandlers::non_interface::Init(core.renderer);
+	texture_impl::set_renderer(core.renderer);
 
 	Game::Start();
 
 	auto& [repeat, state, down, up] = get_kstate(Input::GetInstance());
 
+	constexpr float fixed_dt{ 1000.0f / 90.0f };
+
+	float FPS{ }, elapsed{ };
+	float current{ }, accumulator{ };
+
+	float previous = static_cast<float>(SDL_GetTicks64());
+
 	while (core.engine_state) {
 		
 		down.fill(0); up.fill(0);
-		
+
+		FPS += 1.0f;
+
+		current = static_cast<float>(SDL_GetTicks64());
+		elapsed = current - previous;
+		previous = current;
+
+		accumulator += elapsed;
+
+		// calculates Frames Per Second
+		if (static float seconds{ 1.0f }; (SDL_GetTicks64() / 1000.0f) > seconds) {
+			SDL_Log("FPS: %f", FPS); FPS = 0.0f;
+			seconds += 1.0f;
+		}
+
 		while (SDL_PollEvent(&core.event))
 		{
 			switch (core.event.type)
@@ -67,9 +89,11 @@ int main(int argc, char** argv)
 
 		if (Input::GetInstance().IsKeyPressed(SDL_SCANCODE_ESCAPE))
 			core.engine_state = false;
-		
-		Game::Update(core.refresh_rate);
 
+		while (accumulator >= fixed_dt) {
+			Game::Update(fixed_dt);
+			accumulator -= fixed_dt;
+		}
 
 		SDL_SetRenderDrawColor(core.renderer, 0, 0, 0, 255);
 		SDL_RenderClear(core.renderer);
@@ -117,6 +141,8 @@ Engine::Engine(const int width, const int height) :
 
 	refresh_rate = mode.refresh_rate;
 
+	SDL_Log("Refresh Rate: %d", refresh_rate);
+
 	// if everything went OK
 	engine_state = true;
 
@@ -124,7 +150,7 @@ Engine::Engine(const int width, const int height) :
 
 Engine::~Engine()
 {
-	strawx::TextureHandlers::non_interface::Clear();
+	texture_impl::clear_textures();
 
 	if (renderer) SDL_DestroyRenderer(renderer);
 	SDL_Log("destroying renderer [%s]", SDL_GetError());

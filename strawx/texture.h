@@ -4,17 +4,13 @@
 #include "SDL2/SDL_rect.h"
 #include <string>
 
-namespace strawx::TextureHandlers {
+namespace strawx::TextureHandler {
 
-    void Load(std::string filename, SDL_Rect source, std::string name);
+    void LoadTexture(const std::string filename, const SDL_Rect source, const std::string name);
 
-    void Draw(std::string name, SDL_FRect destination);
+    void DrawTexture(const std::string name, const float x, const float y);
 
-    namespace non_interface { // called internally
-        void Init(void*);
-        void Clear();
-    }
-
+    void SetTextureSize(const std::string name, const float size);
 }
 
 #endif
