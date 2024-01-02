@@ -13,3 +13,9 @@ Release
 *.bat
 *.sh
 *.bash
+
+# application files
+*.cc
+*.cpp
+*.hh
+*.hpp
